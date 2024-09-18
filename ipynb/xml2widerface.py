@@ -4,8 +4,8 @@ import random
 import xml.etree.ElementTree as ET
 
 # 定义路径
-input_img_dir = './license_plate/img_input/'
-input_xml_dir = './license_plate/annotations/'
+input_img_dir = './origin/Images/'
+input_xml_dir = './origin/Annotations/'
 output_train_img_dir = './widerface/train/images/'
 output_val_img_dir = './widerface/val/images/'
 output_train_label_dir = './widerface/train/label/'
@@ -41,25 +41,28 @@ def process_xml_to_txt(xml_file, img_name, label_file):
     root = tree.getroot()
     for obj in root.findall('object'):
         name = obj.find('name').text
-        bndbox = obj.find('bndbox')
-        xmin = int(bndbox.find('xmin').text)
-        ymin = int(bndbox.find('ymin').text)
-        xmax = int(bndbox.find('xmax').text)
-        ymax = int(bndbox.find('ymax').text)
+        polygon = obj.find('polygon')
         
-        # 计算宽高和四个角点坐标
+        # 提取多边形坐标
+        points = []
+        for point in polygon:
+            points.append((int(point.tag[1:]), int(point.text)))  # 获取 x 和 y 坐标
+        
+        # 计算边界框
+        xmin = min(p[0] for p in points)
+        ymin = min(p[1] for p in points)
+        xmax = max(p[0] for p in points)
+        ymax = max(p[1] for p in points)
+        
+        # 计算宽高
         w = xmax - xmin
         h = ymax - ymin
-        x1, y1 = xmin, ymin
-        x2, y2 = xmax, ymin
-        x3, y3 = xmax, ymax
-        x4, y4 = xmin, ymax
         
         # 写入标签文件
         with open(label_file, 'a') as f:
             f.write(f"# {img_name}\n")
-            f.write(f"{xmin} {ymin} {w} {h} {x1} {y1} 0.0 {x2} {y2} 0.0 {x3} {y3} 0.0 {x4} {y4} 0.0\n")
-
+            f.write(f"{xmin} {ymin} {w} {h} {xmin} {ymin} 0.0 {xmax} {ymin} 0.0 {xmax} {ymax} 0.0 {xmin} {ymax} 0.0\n")
+            
 # 生成训练和验证标签文件
 train_label_file = './widerface/train/label.txt'
 val_label_file = './widerface/val/wider_val.txt'
