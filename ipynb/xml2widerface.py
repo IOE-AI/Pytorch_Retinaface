@@ -19,6 +19,7 @@ os.makedirs(output_val_label_dir, exist_ok=True)
 
 # 获取所有图像文件
 img_files = [f for f in os.listdir(input_img_dir) if f.endswith('.jpg')]
+random.seed(42)  # 设置随机种子
 random.shuffle(img_files)
 
 # 按 9:1 的比例分割数据
@@ -70,7 +71,8 @@ val_label_file = './widerface/val/wider_val.txt'
 for img in train_imgs:
     process_xml_to_txt(os.path.join(output_train_label_dir, img.replace('.jpg', '.xml')), img, train_label_file)
 
-for img in val_imgs:
-    process_xml_to_txt(os.path.join(output_val_label_dir, img.replace('.jpg', '.xml')), img, val_label_file)
-
+# 生成验证文件名列表，不包含标签信息
+with open(val_label_file, 'w') as f:
+    for img in val_imgs:
+        f.write(f"{img}\n")  # 只写入文件名，不写入标签信息
 print('Done!')
