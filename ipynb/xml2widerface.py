@@ -47,7 +47,12 @@ def process_xml_to_txt(xml_file, img_name, label_file):
         # 提取多边形坐标
         points = []
         for point in polygon:
-            points.append((int(point.tag[1:]), int(point.text)))  # 获取 x 和 y 坐标
+            # 从 point.tag 中提取坐标
+            if point.tag.startswith('x'):
+                x = int(point.text)
+            elif point.tag.startswith('y'):
+                y = int(point.text)
+                points.append((x, y))  # 将 (x, y) 坐标添加到列表中
         
         # 计算边界框
         xmin = min(p[0] for p in points)
@@ -59,11 +64,17 @@ def process_xml_to_txt(xml_file, img_name, label_file):
         w = xmax - xmin
         h = ymax - ymin
         
+        # 计算四个角点坐标
+        x1, y1 = points[0]  # 左上角
+        x2, y2 = points[1]  # 右上角
+        x3, y3 = points[2]  # 右下角
+        x4, y4 = points[3]  # 左下角
+        
         # 写入标签文件
         with open(label_file, 'a') as f:
             f.write(f"# {img_name}\n")
-            f.write(f"{xmin} {ymin} {w} {h} {xmin} {ymin} 0.0 {xmax} {ymin} 0.0 {xmax} {ymax} 0.0 {xmin} {ymax} 0.0\n")
-            
+            f.write(f"{xmin} {ymin} {w} {h} {x1} {y1} 0.0 {x2} {y2} 0.0 {x3} {y3} 0.0 {x4} {y4} 0.0\n")
+
 # 生成训练和验证标签文件
 train_label_file = './widerface/train/label.txt'
 val_label_file = './widerface/val/wider_val.txt'
